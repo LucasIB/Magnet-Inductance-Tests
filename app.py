@@ -22,14 +22,13 @@ _dict_inductance = {
 _df = pd.DataFrame.from_dict(_dict_inductance)
 
 #DataFrames list with all steps CV and CH values:
-_ch_list, _cv_list = _dd.export_list()
-
+_ch_list, _cv_list, _qs_list = _dd.export_list()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
-def plot_graph(value=_ch_list, name='CH Coil'):
+def plot_graph(value=_ch_list, _name='CH Coil'):
     fig = make_subplots(rows=5, cols=2,subplot_titles=("Step 0-0.1A", "Step 0-0.2A", "Step 0-0.3A", "Step 0-0.4A", "Step 0-5A",
                                                        "Step 0-0.6A", "Step 0-0.7A", "Step 0-0.8A", "Step 0-0.9A", "Step 0-1A"),
                         specs=[[{"secondary_y": True}, {"secondary_y": True}],
@@ -58,10 +57,10 @@ def plot_graph(value=_ch_list, name='CH Coil'):
             fig.update_xaxes(title_text="time (s)", row=i, col=j)
             # Update yaxis properties
             fig.update_yaxes(title_text="I [A]",secondary_y=False, row=i, col=j)
-            fig.update_yaxes(title_text="dI/dt [A/s]",secondary_y=True, showgrid=False, row=i, col=j)
+            fig.update_yaxes(title_text="dI/dt [A/s]",secondary_y=True, showgrid=False, zeroline=False, row=i, col=j)
 
     # Update title and height
-    fig.update_layout(title_text=name+" dI/dt and I versus time for all steps", height=1500)
+    fig.update_layout(title_text=_name+" dI/dt and I versus time for all steps", height=1500)
 
     return fig
 
@@ -71,12 +70,10 @@ app.layout = html.Div([
 
     dcc.Markdown('''
     #### Model: FC-001 - Correction function: FC1
-
-    
+   
     > - **Magnet under test:** Fast Corrector - FC-001 - CV & CH Coil;
 
     > - **Power Supply:** CAENels FAST-PS 1020;
-
 
     > - **Goal:** Measure the possible inductance variation as a function of the applied current.
 
@@ -97,12 +94,13 @@ app.layout = html.Div([
             
         'layout': go.Layout(
             title={
-                'text':"<b>Inductance as a function of current (L[H] x I[A])</b>",
+                'text':"<b>Inductance as a function of current L (H) x I (A)</b>",
                 'xanchor':'center'
                 },
             xaxis={
                 'title': 'Current [A]',
-                'type':'linear'
+                'type':'linear',
+                'range':[0, 1]
                 },
             yaxis={
                 'title': 'L(H)',
@@ -118,9 +116,9 @@ app.layout = html.Div([
 
     dcc.Dropdown(id='cb_induct', 
     options=[
-        {'label': 'Inductance (L) CH', 'value': 'CH'},
-        {'label': 'Inductance (L) CV', 'value': 'CV'},
-        {'label': 'Inductance (L) QS', 'value': 'QS'}
+        {'label': 'CH Coil', 'value': 'CH'},
+        {'label': 'CV Coil', 'value': 'CV'},
+        {'label': 'QS Coil', 'value': 'QS'}
     ],
     value='CH'
     ),
@@ -135,112 +133,20 @@ app.layout = html.Div([
     )
 def update_graph(value):
     '''prepare figure from value'''
-    
     if value == 'CH':
         value = _ch_list
         name = 'CH Coil'
-    else:
+
+    elif value == 'CV':
         value = _cv_list
         name = 'CV Coil'
+
+    else:
+        value = _qs_list
+        name = 'QS Coil'
     
     return plot_graph(value, name)
-    
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-trace1 = go.Scatter(
-x=[0, 1, 2],
-y=[10, 11, 12]
-)
-trace2 = go.Scatter(
-    x=[2, 3, 4],
-    y=[100, 110, 120],
-)
-trace3 = go.Scatter(
-    x=[3, 4, 5],
-    y=[1000, 1100, 1200],
-)
-fig = make_subplots(rows=3, cols=1, specs=[[{}], [{}], [{}]],
-                          shared_xaxes=True, shared_yaxes=True,
-                          vertical_spacing=0.001)
-fig.append_trace(trace1, 3, 1)
-fig.append_trace(trace2, 2, 1)
-fig.append_trace(trace3, 1, 1)
-
-fig['layout'].update(height=600, width=600, title='Stacked Subplots with Shared X-Axes')
-
-
-app.layout = html.Div([
-    dcc.Graph(figure=fig, id='my-figure')
-])
-'''
-'''
-app.layout = html.Div(children=[
-    html.H1(children='Inductance Magnet Test with Fast Corrector'),
-
-    dcc.Graph(
-        id='example-graph',
-        figure={
-        'data': [
-                {'x': _df['current[A]'], 'y': _df['CH'], 'type': 'line', 'name': 'CH'},
-                {'x': _df['current[A]'], 'y': _df['CV'], 'type': 'line', 'name': 'CV'},
-                ],
-            
-        'layout': go.Layout(
-            title={
-                'text':"<b>Inductance as a function of current (L[H] x I[A])</b>",
-                'xanchor':'center'
-                },
-            xaxis={
-                'title': 'Current [A]',
-                'type':'linear'
-                },
-            yaxis={
-                'title': 'L(H)',
-                'type': 'linear'
-                }
-            )
-    }
-    ),
-
-    dcc.Dropdown(id='cb_induct', 
-    options=[
-        {'label': 'Inductance (L) CH', 'value': 'CH'},
-        {'label': 'Inductance (L) CV', 'value': 'CV'},
-        {'label': 'Inductance (L) QS', 'value': 'QS'}
-    ],
-    multi=True,
-    value='MTL'
-    )
-])
-##@app.callback(
-##    Output(componen_
-##    )
-'''
 if __name__ == '__main__':
     app.run_server(debug=True)
 
