@@ -5,6 +5,8 @@ import dash_core_components as dcc
 import dash_html_components as html
 from plotly.subplots import make_subplots
 import pandas as pd
+import plotly.offline as py
+import gunicorn
 
 import _data_for_dash as _dd
 
@@ -21,12 +23,15 @@ _dict_inductance = {
 #DataFrame with Inductances values:
 _df = pd.DataFrame.from_dict(_dict_inductance)
 
-#DataFrames list with all steps CV and CH values:
+#DataFrames list with all steps CH, CV and QS values:
 _ch_list, _cv_list, _qs_list = _dd.export_list()
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+#New features
+server = app.server
 
 def plot_graph(value=_ch_list, _name='CH Coil'):
     fig = make_subplots(rows=5, cols=2,subplot_titles=("Step 0-0.1A", "Step 0-0.2A", "Step 0-0.3A", "Step 0-0.4A", "Step 0-5A",
@@ -70,6 +75,7 @@ app.layout = html.Div([
 
     dcc.Markdown('''
     #### Model: FC-001 - Correction function: FC1
+    @author: lucas.balthazar
    
     > - **Magnet under test:** Fast Corrector - FC-001 - CV & CH Coil;
 
@@ -123,7 +129,7 @@ app.layout = html.Div([
     value='CH'
     ),
     
-    dcc.Graph(figure=plot_graph(), id='my-figure')
+    dcc.Graph(figure=plot_graph(), id='my-figure')    
     
 ])
 
@@ -150,4 +156,3 @@ def update_graph(value):
 if __name__ == '__main__':
     app.run_server(debug=True)
 
-  
