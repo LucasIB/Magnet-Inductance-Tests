@@ -1,11 +1,20 @@
+import os
 from os import listdir
 from os.path import isfile, join
 import numpy as np
 import pandas as pd
 
-_CH_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/ch'
-_CV_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/cv'
-_QS_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/qs'
+##_CH_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/ch'
+##_CV_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/cv'
+##_QS_path = 'C:/Users/labimas/Documents/Lucas/Magnet-Inductance-Tests/Fast Correctors/FC-001/qs'
+
+_CH_path = os.path.dirname(os.path.abspath(__file__))+'\\Fast Correctors\\FC-001\\ch'
+_CV_path = os.path.dirname(os.path.abspath(__file__))+'\\Fast Correctors\\FC-001\\cv'
+_QS_path = os.path.dirname(os.path.abspath(__file__))+'\\Fast Correctors\\FC-001\\qs'
+
+_CH_path = _CH_path.replace('\\','/')
+_CV_path = _CV_path.replace('\\','/')
+_QS_path = _QS_path.replace('\\','/')
 
 def handling_data(path):
     _files = [f for f in listdir(path) if isfile(join(path, f))]
@@ -108,20 +117,26 @@ def export_list():
     #DataFrame with all steps I and dI/dt:
     _files_i_ch = handling_data(_CH_path)
     _files_i_cv = handling_data(_CV_path)
+    _files_i_qs = handling_data(_QS_path)
     #Creating DFs for each step data:
     _dfs_ch = create_main_dfs(_files_i_ch)
     _dfs_cv = create_main_dfs(_files_i_cv)
+    _dfs_qs = create_main_dfs(_files_i_qs)
     #Creating Current specific Dfs for CV and CH:
     _df_i_ch = v_i_dfs(_dfs_ch, 'i')
     _df_i_cv = v_i_dfs(_dfs_cv, 'i')
+    _df_i_qs = v_i_dfs(_dfs_qs, 'i')
     #Slice Df for specific interval:
     a_ch = slice_df_interval(_df_i_ch, -0.001, 0.001)
     a_cv = slice_df_interval(_df_i_cv, -0.001, 0.001)
+    a_qs = slice_df_interval(_df_i_qs, -0.001, 0.001)
     #Creating derivative array for I in CV and CH:
     d_array_ch = poly_fit_func(a_ch, 25)
     d_array_cv = poly_fit_func(a_cv, 25)
+    d_array_qs = poly_fit_func(a_qs, 25)
     #Finally, list os DataFrames for each current step:
     _list_of_dfs_ch = df_creator(a_ch, d_array_ch)
     _list_of_dfs_cv = df_creator(a_cv, d_array_cv)
+    _list_of_dfs_qs = df_creator(a_qs, d_array_qs)
 
-    return _list_of_dfs_ch, _list_of_dfs_cv
+    return _list_of_dfs_ch, _list_of_dfs_cv, _list_of_dfs_qs
